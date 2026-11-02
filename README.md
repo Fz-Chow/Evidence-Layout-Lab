@@ -16,9 +16,33 @@
 | 批量评测 | 逐次保存、配置核对、断点恢复 |
 | 结果界面 | 论文问答、实验对比、失败案例 |
 | 真实检索聚合 | 后续阶段，第一版不实现 |
-| AMD GPU 验收 | 提供命令；本轮尚未在 AUP 执行 |
+| AMD GPU 验收 | 已在 AUP 完成真实生成与单题批量实验验收 |
 
-本机通过上下文/评分单元测试、真实 PDF 检索和 Streamlit 页面测试；本机没有 PyTorch/Transformers，**尚未验证真实模型生成及 AMD GPU 端到端运行**。仓库不发布虚构的正确率或 GPU 实测结果，也不新增未经确认的依赖。
+本机已通过上下文/评分单元测试、真实 PDF 检索和 Streamlit 页面测试；2026 年 11 月 2 日，根据课程 AUP 实例的运行日志、验收输出及页面截图，**已确认论文问答和单题受控实验在 AMD GPU 上运行成功**。该记录证明运行链路可用，回答质量与引用支持仍需人工核验。
+
+## AUP 云端算力实测
+
+2026 年 11 月 2 日，在《AI技术科研实践应用》课程 AUP 云端环境完成真实运行。以下截图由项目使用者在云端运行后提供，保留原图，展示已生成回答的论文问答页面；不是人工构造的界面演示数据。
+
+![AUP 云端 AMD GPU 论文问答实测：API 在线、模型已生成回答及 GPU 内存指标](docs/images/aup-gpu-paper-qa.png)
+
+本次环境与运行记录：
+
+- GPU：AMD Radeon AI PRO R9700。
+- Python：3.12.3；PyTorch：2.9.1+rocm7.13.0；HIP：7.13.99004-3309c6114a。
+- 生成模型：`Qwen/Qwen2.5-3B-Instruct`；检索采用 CPU TF-IDF，未启用 Reranker。
+- 问答截图：API 在线，解析出 2,968 个论文片段；本次响应耗时 8.13 秒，GPU 已分配内存约 6,070 MB。该耗时为问答请求响应时间，不等同于下方批量实验的单次生成耗时。
+- 单题批量实验：14 次真实生成全部成功，6 组集中/分散配对通过验收，验收输出为 `amd_generation_verified: true`。
+
+| 指标 | 证据集中 | 证据分散 |
+| --- | ---: | ---: |
+| 完整输入 token 数 | 266 | 266 |
+| 答案正确率 | 100% | 100% |
+| 必要证据覆盖率 | 91.7% | 75.0% |
+| 平均生成耗时 | 0.284 秒 | 0.264 秒 |
+| 最大峰值分配内存 | 6,102.6 MB | 6,102.6 MB |
+
+批量指标来自使用者提供的终端汇总，原始逐次记录仍保存在 AUP 结果目录，尚未随仓库收录。这是 1 道未人工核验的合成演示题在不同排列下的运行记录，不是独立多题正式比较；不能据此宣称证据分散降低答案正确率。必要证据覆盖率仅检查引用编号，引用支持率尚未人工标注。截图中的生成回答也不作为已核验的正确答案。
 
 ## 实验设计
 
@@ -65,9 +89,7 @@ python3 -m streamlit run src/paper_rag/ui.py --server.address 0.0.0.0 --server.p
 
 ## 新版界面预览
 
-论文问答截图来自当前版本的本机真实 PDF 检索，使用 CPU / TF-IDF，未加载生成模型。
-
-![新版论文问答与真实检索证据](docs/images/v03-paper-qa.jpg)
+论文问答的真实 GPU 运行截图见上方 [AUP 云端算力实测](#aup-云端算力实测)。以下仅展示实验页面的交互与布局。
 
 实验对比与失败案例截图使用**人工构造的界面演示数据**，未调用模型，不代表 AUP 实测结果或证据分散的研究结论；token、耗时和 GPU 成本均留空。页面顶部及侧栏持续显示演示标识。
 
@@ -87,7 +109,7 @@ python3 scripts/create_demo_results.py
 
 ## 在 AUP 执行实验
 
-完整环境准备、结果验收、恢复和端口访问步骤见 [AUP 操作指南](docs/server.md)。先使用课程现有 ROCm PyTorch 环境；不要重装或升级镜像中的 PyTorch。首次模型下载需要网络、磁盘与内存；先只加载一个生成模型，实验不需要同时加载 Embedding 或 Reranker。
+完整环境准备、结果验收、恢复和端口访问步骤见 [AUP 操作指南](docs/server.md)。本次实测结果目录为 `results/aup-smoke`；下方 `results/smoke` 是复现命令的示例目录。先使用课程现有 ROCm PyTorch 环境；不要重装或升级镜像中的 PyTorch。首次模型下载需要网络、磁盘与内存；先只加载一个生成模型，实验不需要同时加载 Embedding 或 Reranker。
 
 ```bash
 export PAPER_RAG_DEVICE=rocm
@@ -167,7 +189,7 @@ python3 -m compileall -q src scripts tests
 PYTHONPATH=src PAPER_RAG_DEVICE=cpu PAPER_RAG_LLM_MODEL= PAPER_RAG_EMBEDDING_MODEL= PAPER_RAG_RERANKER_MODEL= python3 -m pytest tests/test_experiments.py tests/test_api.py tests/test_ui.py -q
 ```
 
-真实模型生成、恢复后的真实推理和 ROCm 内存统计仍需按 AUP 指南实测。当前不包含训练、多智能体、动态权限、自动引用语义判定或统计显著性结论。
+真实模型生成、单题批量实验及 ROCm 内存统计已在上述 AUP 实例验收通过；中断恢复后的真实推理仍待单独验证。若虚拟环境因缺少 `ensurepip` 创建失败，不要继续使用残缺环境；本次实例最终使用已有依赖的系统 Python 运行，可先用 `/usr/bin/python3` 检查 PyTorch 与 Uvicorn 是否可导入，再启动服务。当前不包含训练、多智能体、动态权限、自动引用语义判定或统计显著性结论。
 
 ## 官方资料
 
