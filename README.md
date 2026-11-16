@@ -1,10 +1,10 @@
 # Evidence Layout Lab
 
-《AI技术科研实践应用》课程实践项目，对应课程报告《大模型辅助科研背景下的RAG&Agent研究策略》第 3.2 节“通过控制实验解释机制”。保留论文检索问答，新增双跳推理受控实验，用同一套本地模型调用实现“研究假设—控制实验—结果分析—适用边界”。
+《AI技术科研实践应用》课程实践项目，对应课程报告《大模型辅助科研背景下的RAG&Agent研究策略》修订稿第 3.2.3 节“评测与方法论的元层创新”。保留论文检索问答，新增双跳推理受控实验，用同一套本地模型调用实现“研究假设—控制实验—结果分析—适用边界”。
 
 **研究问题：在关键事实与输入长度相同的条件下，证据分散是否影响跨文档推理？集中组织关联证据能否改善表现？**
 
-课程报告已随仓库收录：[阅读或下载课程报告](docs/course-report.docx)。文件内容保持原样；报告是研究方案背景，不是本项目已取得实验结论的证明。项目展示名为 Evidence Layout Lab，GitHub 仓库已更名为 Evidence-Layout-Lab，本地目录为 `evidence-layout-lab`。
+仓库收录了早期课程报告，供了解研究背景。 [阅读或下载课程报告](docs/course-report.docx)项目展示名为 Evidence Layout Lab，GitHub 仓库已更名为 Evidence-Layout-Lab，本地目录为 `evidence-layout-lab`。
 
 ## 第一版范围与验证状态
 
@@ -16,7 +16,7 @@
 | 批量评测 | 逐次保存、配置核对、断点恢复 |
 | 结果界面 | 论文问答、实验对比、失败案例 |
 | 真实检索聚合 | 后续阶段，第一版不实现 |
-| AMD GPU 验收 | 已在 AUP 完成真实生成与单题批量实验验收 |
+| AMD GPU 验收 | 已在 AUP 完成论文问答、单题试运行和多题配对实验 |
 
 本机已通过上下文/评分单元测试、真实 PDF 检索和 Streamlit 页面测试；2026 年 11 月 2 日，根据课程 AUP 实例的运行日志、验收输出及页面截图，**已确认论文问答和单题受控实验在 AMD GPU 上运行成功**。该记录证明运行链路可用，回答质量与引用支持仍需人工核验。
 
@@ -38,11 +38,26 @@
 | --- | ---: | ---: |
 | 完整输入 token 数 | 266 | 266 |
 | 答案正确率 | 100% | 100% |
-| 必要证据覆盖率 | 91.7% | 75.0% |
+| 必要证据编号覆盖率 | 91.7% | 75.0% |
 | 平均生成耗时 | 0.284 秒 | 0.264 秒 |
 | 最大峰值分配内存 | 6,102.6 MB | 6,102.6 MB |
 
-批量指标来自使用者提供的终端汇总，原始逐次记录仍保存在 AUP 结果目录，尚未随仓库收录。这是 1 道未人工核验的合成演示题在不同排列下的运行记录，不是独立多题正式比较；不能据此宣称证据分散降低答案正确率。必要证据覆盖率仅检查引用编号，引用支持率尚未人工标注。截图中的生成回答也不作为已核验的正确答案。
+上表来自 11 月 2 日的终端汇总。11 月 16 日复跑和补充批次的逐次记录见下节。这是 1 道未人工核验的合成演示题在不同排列下的运行记录，不是独立多题正式比较；不能据此宣称证据分散降低答案正确率。必要证据覆盖率仅检查引用编号，引用支持率尚未人工标注。截图中的生成回答也不作为已核验的正确答案。
+
+## 11 月 16 日多题对照结果
+
+在课程 AUP ROCm 环境使用 Qwen2.5-3B-Instruct。各批次的集中组和分散组采用同题、同材料、等长输入，每题各生成 6 次。八题批次的题目和必要证据在运行前由 Codex 对照一手来源复核，人工核验状态仍为待审。
+
+| 批次 | 每组生成数 | 答案正确率（集中／分散） | 必要证据编号覆盖率（集中／分散） |
+| --- | ---: | ---: | ---: |
+| 单题复跑 | 6 | 100.00%／100.00% | 91.67%／75.00% |
+| 四题探索 | 24 | 79.17%／75.00% | 50.00%／50.00% |
+| 八题补充实验 | 48 | 62.50%／60.42% | 47.92%／48.96% |
+
+八题批次共 112 条生成、48 组集中／分散配对，GPU 验收无运行失败。其中 16 条仅提供必要证据，输入较短，单列作为能力检查。其中答案正确率 68.75%，编号覆盖率 62.50%，2 条输出格式无效。同一题的排列属于重复观测。单题观察到的集中布局覆盖率优势未在多题批次重现，输出的引用语义支持仍待独立核验。
+
+- 前两批及备用 0.5B 批次。 [实验报告](docs/2026-11-16-aup.md) · [来源题集](docs/two_hop_public_20261116.jsonl) · [逐次输出与配置](docs/2026-11-16-aup-records.tar.gz)
+- 八题补充批次。 [逐题复核与实验报告](docs/2026-11-16-aup-ai-review.md) · [运行题集](docs/two_hop_ai_reviewed_20261116.jsonl) · [逐次输出与配置](docs/2026-11-16-aup-ai-review-records.tar.gz)
 
 ## 实验设计
 
@@ -109,7 +124,7 @@ python3 scripts/create_demo_results.py
 
 ## 在 AUP 执行实验
 
-完整环境准备、结果验收、恢复和端口访问步骤见 [AUP 操作指南](docs/server.md)。本次实测结果目录为 `results/aup-smoke`；下方 `results/smoke` 是复现命令的示例目录。先使用课程现有 ROCm PyTorch 环境；不要重装或升级镜像中的 PyTorch。首次模型下载需要网络、磁盘与内存；先只加载一个生成模型，实验不需要同时加载 Embedding 或 Reranker。
+完整环境准备、结果验收、恢复和端口访问步骤见 [AUP 操作指南](docs/server.md)。11 月 2 日的单题实测结果目录为 `results/aup-smoke`；下方 `results/smoke` 是复现命令的示例目录。先使用课程现有 ROCm PyTorch 环境；不要重装或升级镜像中的 PyTorch。首次模型下载需要网络、磁盘与内存；先只加载一个生成模型，实验不需要同时加载 Embedding 或 Reranker。
 
 ```bash
 export PAPER_RAG_DEVICE=rocm
@@ -129,7 +144,15 @@ python3 scripts/verify_experiment.py results/smoke
 python3 scripts/run_experiment.py --output results/smoke --limit 1 --allow-unreviewed --require-gpu --retry-errors
 ```
 
-人工核验并冻结独立任务集后，再运行完整探索与验证；不要对演示数据直接宣称正式结论：
+复跑八题 AI 复核批次时，沿用上方的环境变量和预算，固定模型权重 revision，并使用独立输出目录。
+
+```bash
+export PAPER_RAG_MODEL_REVISION=aa8e72537993ba99e69dfaafa59ed015b17504d1
+python3 scripts/run_experiment.py --dataset docs/two_hop_ai_reviewed_20261116.jsonl --output results/ai-reviewed-3b --split exploration --allow-unreviewed --require-gpu --seed 42
+python3 scripts/verify_experiment.py results/ai-reviewed-3b
+```
+
+正式验证仍需先人工核验并冻结独立题集。另行设置正式实验使用的模型 revision 和输出目录。
 
 ```bash
 python3 scripts/run_experiment.py --dataset data/experiments/two_hop_verified.jsonl --output results/exploration --split exploration --require-gpu
@@ -143,7 +166,7 @@ python3 scripts/run_experiment.py --dataset data/experiments/two_hop_verified.js
 | 指标 | 规则 |
 | --- | --- |
 | 答案正确率 | JSON 短答案经大小写、全半角、空白、标点规范化后匹配标准答案或别名 |
-| 必要证据覆盖率 | 引用编号是否包含全部必要证据；仅是选择覆盖指标 |
+| 必要证据编号覆盖率 | 每次输出中命中的不同必要编号数，除以该题必要编号总数。另行评估引用语义支持 |
 | 引用支持率 | 人工逐条标注引用是否支持回答；未核验为空值 |
 | 成本 | 完整输入/实际输出 token、生成调用耗时、逐次峰值内存 |
 | 配对变化 | 同题同排列下集中与分散的对错和运行状态 |
@@ -189,7 +212,7 @@ python3 -m compileall -q src scripts tests
 PYTHONPATH=src PAPER_RAG_DEVICE=cpu PAPER_RAG_LLM_MODEL= PAPER_RAG_EMBEDDING_MODEL= PAPER_RAG_RERANKER_MODEL= python3 -m pytest tests/test_experiments.py tests/test_api.py tests/test_ui.py -q
 ```
 
-真实模型生成、单题批量实验及 ROCm 内存统计已在上述 AUP 实例验收通过；中断恢复后的真实推理仍待单独验证。若虚拟环境因缺少 `ensurepip` 创建失败，不要继续使用残缺环境；本次实例最终使用已有依赖的系统 Python 运行，可先用 `/usr/bin/python3` 检查 PyTorch 与 Uvicorn 是否可导入，再启动服务。当前不包含训练、多智能体、动态权限、自动引用语义判定或统计显著性结论。
+真实模型生成、单题及多题配对实验、ROCm 内存统计均已在上述 AUP 实例验收通过。中断恢复后的真实推理仍待单独验证。若虚拟环境因缺少 `ensurepip` 创建失败，不要继续使用残缺环境；本次实例最终使用已有依赖的系统 Python 运行，可先用 `/usr/bin/python3` 检查 PyTorch 与 Uvicorn 是否可导入，再启动服务。当前不包含训练、多智能体、动态权限、自动引用语义判定或统计显著性结论。
 
 ## 官方资料
 
