@@ -46,7 +46,7 @@
 
 ## 11 月 16 日多题对照结果
 
-在课程 AUP ROCm 环境使用 Qwen2.5-3B-Instruct。各批次的集中组和分散组采用同题、同材料、等长输入，每题各生成 6 次。八题批次的题目和必要证据在运行前由 Codex 对照一手来源复核，人工核验状态仍为待审。
+在课程 AUP ROCm 环境使用 Qwen2.5-3B-Instruct。各批次的集中组和分散组采用同题、同材料、等长输入，每题各生成 6 次。八题批次运行前由 Codex 辅助对照一手来源。项目作者于 2026 年 11 月 16 日确认八题的题目及必要证据的来源均经人工复核通过。
 
 | 批次 | 每组生成数 | 答案正确率（集中／分散） | 必要证据编号覆盖率（集中／分散） |
 | --- | ---: | ---: | ---: |
@@ -57,7 +57,7 @@
 八题批次共 112 条生成、48 组集中／分散配对，GPU 验收无运行失败。其中 16 条仅提供必要证据，输入较短，单列作为能力检查。其中答案正确率 68.75%，编号覆盖率 62.50%，2 条输出格式无效。同一题的排列属于重复观测。单题观察到的集中布局覆盖率优势未在多题批次重现，输出的引用语义支持仍待独立核验。
 
 - 前两批及备用 0.5B 批次。 [实验报告](docs/2026-11-16-aup.md) · [来源题集](docs/two_hop_public_20261116.jsonl) · [逐次输出与配置](docs/2026-11-16-aup-records.tar.gz)
-- 八题补充批次。 [逐题复核与实验报告](docs/2026-11-16-aup-ai-review.md) · [运行题集](docs/two_hop_ai_reviewed_20261116.jsonl) · [逐次输出与配置](docs/2026-11-16-aup-ai-review-records.tar.gz)
+- 八题补充批次。 [逐题复核与实验报告](docs/2026-11-16-aup-ai-review.md) · [运行时题集](docs/two_hop_ai_reviewed_20261116.jsonl) · [人工核验版题集](docs/two_hop_human_reviewed_20261116.jsonl) · [逐次输出与配置](docs/2026-11-16-aup-ai-review-records.tar.gz)
 
 ## 实验设计
 
@@ -76,6 +76,8 @@
 每题在两种证据顺序下各运行 3 个集中排列、3 个分散排列、1 次必要证据条件，共 14 次生成。条件执行顺序由固定种子打散；默认贪心解码。种子控制调度，不承诺不同 GPU 内核间逐位复现。排列属于同一道题的重复观测，不能充当独立题目扩大样本量。
 
 ## 数据与人工核验
+
+八题人工核验版沿用原运行题集的题干、答案与证据，登记核验人和确认日期。原运行题集保留用于核对当时的输入指纹和复跑结果。人工核验范围为题目来源及必要证据，逐次输出的引用支持评审另行记录。 [人工核验版题集](docs/two_hop_human_reviewed_20261116.jsonl)
 
 首批提供 8 道**封闭世界合成演示题**，探索集和验证集各 4 道。人物、项目与来源均为虚构，全部人工核验状态为 pending；不是正式基准。每题包括问题、答案及别名、两条必要证据、干扰材料、来源、事实组与人工核验状态。必要证据编号随题变化，提示词不提供标准引用编号。格式与核验方法见 [任务集说明](data/experiments/README.md)。
 
@@ -144,7 +146,7 @@ python3 scripts/verify_experiment.py results/smoke
 python3 scripts/run_experiment.py --output results/smoke --limit 1 --allow-unreviewed --require-gpu --retry-errors
 ```
 
-复跑八题 AI 复核批次时，沿用上方的环境变量和预算，固定模型权重 revision，并使用独立输出目录。
+复跑原八题补充批次时，沿用上方的环境变量和预算，固定模型权重 revision，并使用独立输出目录。
 
 ```bash
 export PAPER_RAG_MODEL_REVISION=aa8e72537993ba99e69dfaafa59ed015b17504d1
@@ -159,7 +161,7 @@ python3 scripts/run_experiment.py --dataset data/experiments/two_hop_verified.js
 python3 scripts/run_experiment.py --dataset data/experiments/two_hop_verified.jsonl --output results/validation --split validation --require-gpu
 ```
 
-上面的核验版数据文件需要自行准备，仓库不伪造人工核验记录。
+上面的通用示例需要另行准备独立题集。已发布的八题人工核验版对应上述已运行题目。
 
 ## 评分与结果追溯
 
